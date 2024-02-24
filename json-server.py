@@ -4,9 +4,9 @@ from nss_handler import HandleRequests, status
 
 
 # Add your imports below this line
-from views import list_docks, retrieve_dock, delete_dock, update_dock
-from views import list_haulers, retrieve_hauler, delete_hauler, update_hauler
-from views import list_ships, retrieve_ship, delete_ship, update_ship
+from views import list_docks, retrieve_dock, delete_dock, update_dock, create_dock
+from views import list_haulers, retrieve_hauler, delete_hauler, update_hauler, create_hauler
+from views import list_ships, retrieve_ship, delete_ship, update_ship, create_ship
 
 
 class JSONServer(HandleRequests):
@@ -39,7 +39,7 @@ class JSONServer(HandleRequests):
                 response_body = retrieve_ship(url["pk"])
                 return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
-            response_body = list_ships()
+            response_body = list_ships(url)
             return self.response(response_body, status.HTTP_200_SUCCESS.value)
 
         else:
@@ -112,12 +112,71 @@ class JSONServer(HandleRequests):
 
     def do_POST(self):
         """Handle POST requests from a client"""
+        url = self.parse_url(self.path)
+
+        if url["requested_resource"] == "ships":
+            content_len = int(self.headers.get("content-length", 0))
+            request_body = self.rfile.read(content_len)
+            ship_data = json.loads(request_body)
+
+            # Call the create_ship function to add a new ship
+            new_ship_id = create_ship(ship_data)
+
+            if new_ship_id:
+                # Respond with the newly created ship's ID and a success status
+                response_body = json.dumps({"id": new_ship_id})
+                return self.response(response_body, status.HTTP_201_SUCCESS_CREATED.value)
+            else:
+                # Respond with an error status if ship creation fails
+                return self.response(
+                    "Failed to create ship", status.HTTP_500_SERVER_ERROR.value
+                )
+
+        elif url["requested_resource"] == "haulers":
+            content_len = int(self.headers.get("content-length", 0))
+            request_body = self.rfile.read(content_len)
+            hauler_data = json.loads(request_body)
+
+            # Call the create_hauler function to add a new hauler
+            new_hauler_id = create_hauler(hauler_data)
+
+            if new_hauler_id:
+                # Respond with the newly created hauler's ID and a success status
+                response_body = json.dumps({"id": new_hauler_id})
+                return self.response(response_body, status.HTTP_201_SUCCESS_CREATED.value)
+            else:
+                # Respond with an error status if hauler creation fails
+                return self.response(
+                     "Failed to create hauler", status.HTTP_500_SERVER_ERROR.value
+                )
+
+        elif url["requested_resource"] == "docks":
+            content_len = int(self.headers.get("content-length", 0))
+            request_body = self.rfile.read(content_len)
+            dock_data = json.loads(request_body)
+
+            # Call the create_hauler function to add a new hauler
+            new_dock_id = create_dock(dock_data)
+
+            if new_dock_id:
+                # Respond with the newly created hauler's ID and a success status
+                response_body = json.dumps({"id": new_dock_id})
+                return self.response(
+                    response_body, status.HTTP_201_SUCCESS_CREATED.value
+                )
+            else:
+                # Respond with an error status if hauler creation fails
+                return self.response(
+                    "Failed to create hauler", status.HTTP_500_SERVER_ERROR.value
+                )
+
+        else:
+            # Respond with an error status if the requested resource is not supported
+            return self.response(
+             "Invalid requested resource", status.HTTP_400_CLIENT_ERROR_BAD_REQUEST_DATA.value
+         )
 
         pass
-
-
-
-
 
 
 
